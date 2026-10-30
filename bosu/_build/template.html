@@ -1,0 +1,500 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>웰리플사업팀 BOSU 출고분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 견적 관리프로그램과 같은 ERP 셸 — 상단 앱바 / 왼쪽 메뉴 / 가운데 분석 패널 */
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --sunk:#F5F7FA; --head:#E4E9F0; --line:#D3DAE4; --line-2:#E6EBF1;
+  --ink:#16202E; --ink-2:#465467; --ink-3:#7E8A9B;
+  --bar:#16233A; --bar-2:#1E2F4D; --bar-ink:#E9EEF6; --bar-ink-2:#93A3BC;
+  --accent:#1F5FD1; --accent-ink:#FFFFFF; --accent-soft:#E3ECFB;
+  --y25:#A9B6C8; --y26:#1F5FD1;
+  --ok:#17845A; --ok-soft:#DFF2E9; --bad:#C8322B; --bad-soft:#FBE4E2; --tag:#B4541D; --tag-soft:#FBE9DD; --warn:#B42318;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --appbar:52px;
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E131B; --surface:#151C27; --sunk:#111821; --head:#1C2533; --line:#2A3445; --line-2:#212B3A;
+  --ink:#E4EAF3; --ink-2:#A9B5C6; --ink-3:#77849A;
+  --bar:#0A0F17; --bar-2:#131B28; --bar-ink:#E4EAF3; --bar-ink-2:#7F8EA6;
+  --accent:#6E9BFF; --accent-ink:#0B1424; --accent-soft:#1B2A47; --y25:#4A5568; --y26:#6E9BFF;
+  --ok:#2E9E6B; --ok-soft:#163327; --bad:#F28B82; --bad-soft:#3A1D1B; --tag:#F0A070; --tag-soft:#3A2619; --warn:#F28B82; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E131B; --surface:#151C27; --sunk:#111821; --head:#1C2533; --line:#2A3445; --line-2:#212B3A;
+  --ink:#E4EAF3; --ink-2:#A9B5C6; --ink-3:#77849A;
+  --bar:#0A0F17; --bar-2:#131B28; --bar-ink:#E4EAF3; --bar-ink-2:#7F8EA6;
+  --accent:#6E9BFF; --accent-ink:#0B1424; --accent-soft:#1B2A47; --y25:#4A5568; --y26:#6E9BFF;
+  --ok:#2E9E6B; --ok-soft:#163327; --bad:#F28B82; --bad-soft:#3A1D1B; --tag:#F0A070; --tag-soft:#3A2619; --warn:#F28B82; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:13px;line-height:1.5;letter-spacing:-.005em}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums;font-family:var(--f-mono);letter-spacing:-.02em}
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:8;height:var(--appbar);background:var(--bar);color:var(--bar-ink);display:flex;align-items:center;gap:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid #ffffff14}
+.appbar .sp{flex:1}
+.logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#3B7BFF,#1F5FD1);display:grid;place-items:center;font-weight:700;font-size:15px;color:#fff;flex:0 0 auto;font-family:var(--f-mono)}
+.appname{display:flex;align-items:baseline;gap:8px;min-width:0;overflow:hidden}
+.appname h1{margin:0;font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.appname .by{font-family:var(--f-mono);font-size:11px;color:var(--bar-ink-2);letter-spacing:.04em;white-space:nowrap}
+.appmeta{font-size:11.5px;color:var(--bar-ink-2);white-space:nowrap}
+.appmeta b{color:var(--bar-ink);font-family:var(--f-mono);font-weight:500}
+.shell{display:grid;grid-template-columns:200px minmax(0,1fr);min-height:calc(100% - var(--appbar));background:linear-gradient(90deg,var(--bar-2) 0 200px,transparent 200px)}
+.side{background:var(--bar-2);color:var(--bar-ink);padding-block:14px;display:flex;flex-direction:column;gap:2px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--appbar));height:calc(100vh - var(--appbar) - env(safe-area-inset-top,0px));padding-left:max(0px,env(safe-area-inset-left,0px))}
+.grp{font-size:10.5px;letter-spacing:.12em;color:var(--bar-ink-2);padding:10px 18px 6px;font-weight:600}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 18px;border:0;background:none;color:var(--bar-ink);text-align:left;font-size:13px;border-left:3px solid transparent;width:100%;text-decoration:none}
+.nav svg{width:16px;height:16px;flex:0 0 auto;opacity:.8}
+.nav:hover{background:#ffffff0d}
+.nav.on{background:#ffffff14;border-left-color:#5B8EFF;font-weight:600}
+.nav .cnt{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--bar-ink-2)}
+.nav .cnt.alert{color:#FFB4A8}
+.foot{margin-top:auto;padding:12px 18px;font-size:11px;color:var(--bar-ink-2);line-height:1.6;border-top:1px solid #ffffff14}
+.main{min-width:0;padding:16px 16px 48px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-content:start;padding-right:max(16px,env(safe-area-inset-right,0px))}
+.crumb{font-size:11.5px;color:var(--ink-3);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.crumb b{color:var(--ink);font-weight:600}
+.crumb .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:5px 11px;font-size:12px;color:var(--ink-2);white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;min-width:0}
+.ph{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--sunk);border-radius:6px 6px 0 0;flex-wrap:wrap}
+.ph h2{margin:0;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.ph h2::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--accent)}
+.ph .sub{font-size:11.5px;color:var(--ink-3)}
+.ph .sp{flex:1}
+.pb{padding:12px 14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tile{background:var(--surface);padding:12px 14px;display:grid;gap:4px;align-content:start}
+.tile .k{font-size:11.5px;color:var(--ink-3)}
+.tile .v{font-family:var(--f-mono);font-size:21px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tile .prev{font-size:11.5px;color:var(--ink-3)}
+.tile .prev .num{color:var(--ink-2)}
+.d{font-family:var(--f-mono);font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.d.up{color:var(--ok)} .d.dn{color:var(--bad)} .d.zero{color:var(--ink-3)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;white-space:nowrap}
+.pill.new{background:var(--accent-soft);color:var(--accent)}
+.pill.lost{background:var(--bad-soft);color:var(--bad)}
+.pill.up{background:var(--ok-soft);color:var(--ok)}
+.pill.dn{background:var(--tag-soft);color:var(--tag)}
+.pill.flat{background:var(--head);color:var(--ink-2)}
+.pill.chk{background:var(--bad-soft);color:var(--bad)}
+.pill.fix{background:var(--tag-soft);color:var(--tag)}
+.pill.info{background:var(--head);color:var(--ink-2)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.tbl{overflow:auto;max-height:34rem}
+.tbl.free{max-height:none}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th{position:sticky;top:0;z-index:1;background:var(--head);color:var(--ink-2);font-weight:600;font-size:11.5px;text-align:left;padding:7px 10px;white-space:nowrap;border-bottom:1px solid var(--line);border-right:1px solid var(--line-2)}
+th.r,td.r{text-align:right}
+th button{all:unset;cursor:pointer}
+th button:focus-visible{outline:2px solid var(--accent)}
+th[aria-sort] button::after{content:" ▾";color:var(--accent)}
+th[aria-sort=ascending] button::after{content:" ▴"}
+th.g25{background:color-mix(in srgb,var(--head) 70%,var(--y25))}
+th.g26{background:color-mix(in srgb,var(--head) 80%,var(--y26))}
+td{padding:6px 10px;border-bottom:1px solid var(--line-2);border-right:1px solid var(--line-2);vertical-align:middle;white-space:nowrap}
+td:last-child,th:last-child{border-right:0}
+td.r{font-family:var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+td.name{white-space:normal;min-width:11rem}
+td.name b{font-weight:600}
+td.mut{color:var(--ink-3)}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--sunk)}
+tr.sel td{background:var(--accent-soft)}
+tr.tot td{font-weight:700;background:var(--sunk)}
+.neg{color:var(--bad)} .warn{color:var(--tag)}
+.bar{display:block;height:4px;border-radius:2px;background:var(--y26);margin-top:3px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line-2)}
+.tools input,.tools select{height:32px;border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:0 10px;font-size:12.5px;min-width:0}
+.tools input{flex:1 1 14rem}
+.tools .count{font-size:11.5px;color:var(--ink-3);margin-left:auto}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.chart{position:relative;min-height:240px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .tk{fill:var(--ink-3);font-size:10.5px;font-family:var(--f-mono)}
+.chart .gl{stroke:var(--line-2)}
+.chart .lb{fill:var(--ink-2);font-size:11px;font-family:var(--f-body)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:5px;box-shadow:0 8px 24px #0002;padding:7px 10px;font-size:11.5px;white-space:nowrap;z-index:3}
+.tip .h{color:var(--ink-3);margin-bottom:2px}
+.tip .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.tip .row i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px}
+.tip .num{font-weight:600}
+.note{font-size:12px;color:var(--ink-2);line-height:1.65;margin:0}
+.note b{color:var(--ink)}
+.facts{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.facts li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;font-size:12.5px;line-height:1.6}
+.facts li .pill{margin-top:2px}
+.mover{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 0;border-bottom:1px dashed var(--line-2);font-size:12.5px}
+.mover:last-child{border-bottom:0}
+.mover .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mover .s{grid-column:1/-1;font-size:11px;color:var(--ink-3)}
+.detail{border-top:2px solid var(--accent)}
+.issue{border-bottom:1px solid var(--line-2);padding:12px 14px;display:grid;gap:6px}
+.issue:last-child{border-bottom:0}
+.issue h3{margin:0;font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.issue p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.6}
+.issue details summary{font-size:12px;color:var(--accent);cursor:pointer}
+.issue .tbl{max-height:18rem;margin-top:6px;border:1px solid var(--line-2);border-radius:4px}
+.lock{position:fixed;inset:0;z-index:80;background:radial-gradient(1200px 600px at 30% 10%,#22365C,#101A2C);display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lock form{width:min(360px,100%);display:grid;gap:12px;background:var(--surface);border-radius:10px;padding:28px 26px;box-shadow:0 24px 60px #0007}
+.lock h2{margin:0;font-size:17px;letter-spacing:-.02em}
+.lock .by{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);margin-top:-8px}
+.lock p{margin:0;font-size:12.5px;color:var(--ink-2)}
+.lock input{height:44px;border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:0 14px;font-size:16px;letter-spacing:.15em;font-family:var(--f-mono)}
+.lock input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.lock button{height:42px;border:0;border-radius:4px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:14px}
+.lock .err{color:var(--warn);font-size:12px;min-height:1.2em}
+@media (max-width:1100px){.shell{grid-template-columns:64px minmax(0,1fr);background:linear-gradient(90deg,var(--bar-2) 0 64px,transparent 64px)}.grp,.nav .lbl,.nav .cnt,.foot{display:none}.nav{justify-content:center;padding:12px 0}.nav svg{width:19px;height:19px}}
+@media (max-width:720px){
+  .appmeta,.appname .by{display:none}
+  .appname h1{font-size:13.5px}
+  .shell{grid-template-columns:minmax(0,1fr);background:none}
+  .crumb .sp{flex-basis:100%}
+  .side{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--appbar));z-index:6;height:auto;flex-direction:row;padding:0;overflow-x:auto;gap:0}
+  .nav{flex:1 0 auto;justify-content:center;padding:10px 10px;border-left:0;border-bottom:3px solid transparent;white-space:nowrap;font-size:12px;gap:5px}
+  .nav .lbl{display:inline}.nav svg{display:none}
+  .nav.on{border-bottom-color:#5B8EFF}
+  .main{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  .tile .v{font-size:18px}
+}
+@media (prefers-reduced-motion:no-preference){.main>*{animation:fade .25s ease-out both}@keyframes fade{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}}
+</style></head><body>
+
+<header class="appbar">
+  <div class="logo" aria-hidden="true">W</div>
+  <div class="appname"><h1>웰리플사업팀 BOSU 출고분석</h1><span class="by">by PDS</span></div>
+  <div class="sp"></div>
+  <div class="appmeta" id="appmeta"></div>
+</header>
+<div class="shell" id="shell" hidden>
+  <nav class="side" aria-label="메뉴">
+    <div class="grp">BOSU 분석</div>
+    <button class="nav on" data-v="sum" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="lbl">요약</span></button>
+    <button class="nav" data-v="yoy" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13l-3-3M21 17H8l3 3"/></svg><span class="lbl">연도 비교</span></button>
+    <button class="nav" data-v="cust" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13M9 21v-6h6v6"/></svg><span class="lbl">거래처</span><span class="cnt" id="nCust"></span></button>
+    <button class="nav" data-v="sku" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12 12 20l-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl">SKU · 단가</span></button>
+    <button class="nav" data-v="chk" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span class="lbl">데이터 검토</span><span class="cnt alert" id="nChk"></span></button>
+    <div class="grp">바로가기</div>
+    <a class="nav" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><span class="lbl">견적 관리프로그램</span></a>
+    <div class="foot">웰리플사업팀 전용<br>금액은 공급가(부가세 제외)<br>문의 · PDS</div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+const E=/*__PAYLOAD__*/null;
+(function(){
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=new Intl.NumberFormat('ko-KR');
+const F={
+  int:v=>nf.format(Math.round(v||0)),
+  won:v=>nf.format(Math.round(v||0)),
+  man:v=>{const a=Math.abs(v||0);return a>=1e8?(v/1e8).toFixed(2)+'억':nf.format(Math.round((v||0)/1e4))+'만'},
+  pct:v=>v==null||!isFinite(v)?'–':(v*100).toFixed(1)+'%',
+  dp:v=>v==null||!isFinite(v)?'–':Math.abs(v)<0.0005?'0.0%':(v>0?'+':'')+(v*100).toFixed(1)+'%',
+  dw:v=>(v>0?'+':v<0?'−':'')+nf.format(Math.abs(Math.round(v||0))),
+  dman:v=>(v>0?'+':v<0?'−':'')+F.man(Math.abs(v||0)),
+};
+const dcls=v=>v>0?'up':v<0?'dn':'zero';
+const delta=(a,b)=>b?a/b-1:(a?Infinity:null);
+const dHtml=(cur,prev,fmt='dp')=>{let d=fmt==='dp'?delta(cur,prev):cur-prev;if(fmt==='dp'&&d!=null&&isFinite(d)&&Math.abs(d)<0.0005)d=0;const t=fmt==='dp'?(d===Infinity?'신규':F.dp(d)):F.dman(d);return `<span class="d ${dcls(d===Infinity?1:d)}">${t}</span>`};
+
+let P, R, COST, CUT, S={v:'sum',mode:'ytd',sku:'Bosu Professional',cq:'',cst:'',cc1:'',csort:{k:'a26',dir:-1},csel:null,team:'팀'};
+
+function boot(payload){
+  P=payload; COST=P.cost;
+  R=P.rows.map(x=>{const [dt,item,q,a,cust,c1,c2,team,rep,type]=x;return {dt,y:+dt.slice(0,4),m:+dt.slice(5,7),md:dt.slice(5),item,q,a,cust,c1:c1||'기타',c2,team,rep,type,paid:a>0,pr:a>0?a-(COST[item]||0)*q:0}});
+  CUT=P.meta.maxDate.slice(5);
+  $('#appmeta').innerHTML=`출고 데이터 <b>${esc(P.meta.minDate)} ~ ${esc(P.meta.maxDate)}</b>`;
+  $('#nChk').textContent=P.issues.filter(i=>i.level==='chk').length||'';
+  $('#shell').hidden=false;
+  $$('.nav[data-v]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
+  const h=location.hash.slice(1); go(['sum','yoy','cust','sku','chk'].includes(h)?h:'sum');
+  let rt; addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>drawCharts(),120)});
+}
+function go(v){S.v=v;$$('.nav[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));history.replaceState(null,'','#'+v);render();window.scrollTo(0,0)}
+
+/* ---------- 집계 ---------- */
+const inP=(r,y)=>r.y===y&&(S.mode==='year'||r.md<=CUT);
+const per=()=>S.mode==='ytd'?`1/1~${+CUT.slice(0,2)}/${+CUT.slice(3)}`:'연간';
+const lab=y=>S.mode==='ytd'?`${String(y).slice(2)}년 ${per()}`:(y===2026?`26년 누적(~${+CUT.slice(0,2)}/${+CUT.slice(3)})`:`${String(y).slice(2)}년 연간`);
+function agg(keyFn,filter){
+  const m=new Map();
+  for(const r of R){ if(!r.paid||(filter&&!filter(r)))continue;
+    const k=keyFn(r); if(k==null)continue;
+    let o=m.get(k); if(!o){o={k,q25:0,q26:0,a25:0,a26:0,p25:0,p26:0,n25:0,n26:0,c25:new Set(),c26:new Set(),qA25:0,aA25:0,last:'',first:'9999',team:'',rep:''};m.set(k,o)}
+    if(r.y===2025){o.qA25+=r.q;o.aA25+=r.a}
+    for(const y of [2025,2026]) if(inP(r,y)){const s=String(y).slice(2);o['q'+s]+=r.q;o['a'+s]+=r.a;o['p'+s]+=r.pr;o['n'+s]++;o['c'+s].add(r.cust)}
+    if(r.dt>o.last){o.last=r.dt;o.team=r.team;o.rep=r.rep}
+    if(r.dt<o.first)o.first=r.dt;
+  }
+  return [...m.values()];
+}
+function tot(rows){const t={q25:0,q26:0,a25:0,a26:0,p25:0,p26:0,n25:0,n26:0,qA25:0,aA25:0};for(const o of rows)for(const k in t)t[k]+=o[k];return t}
+
+/* ---------- 공통 조각 ---------- */
+const crumb=(t)=>`<div class="crumb">BOSU 분석 › <b>${t}</b><span class="sp"></span><span>비교 기간</span><div class="seg" role="group" aria-label="비교 기간"><button data-mode="ytd" class="${S.mode==='ytd'?'on':''}">같은 기간 (1/1~${+CUT.slice(0,2)}/${+CUT.slice(3)})</button><button data-mode="year" class="${S.mode==='year'?'on':''}">연간 (26년은 누적)</button></div></div>`;
+function bindCrumb(){$$('.seg [data-mode]').forEach(b=>b.addEventListener('click',()=>{S.mode=b.dataset.mode;render()}))}
+const legend=()=>`<div class="legend"><span><i style="background:var(--y25)"></i>2025년</span><span><i style="background:var(--y26)"></i>2026년</span></div>`;
+const panel=(title,sub,body,extra='')=>`<section class="panel"><div class="ph"><h2>${title}</h2><span class="sub">${sub||''}</span><span class="sp"></span>${extra}</div>${body}</section>`;
+
+/* compare table: rows of agg, first col label */
+function cmpTable(rows,label,opts={}){
+  const t=tot(rows), share=o=>t.a26?o.a26/t.a26:0;
+  const body=rows.map(o=>`<tr><td class="name"><b>${esc(o.k)}</b>${opts.sub?`<div class="mut" style="font-size:11px">${esc(opts.sub(o))}</div>`:''}</td>
+    <td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td>
+    <td class="r">${F.won(o.a25)}</td><td class="r">${F.won(o.a26)}</td>
+    <td class="r ${o.a26-o.a25<0?'neg':''}">${F.dw(o.a26-o.a25)}</td><td class="r">${dHtml(o.a26,o.a25)}</td>
+    <td class="r">${F.pct(share(o))}<span class="bar" style="width:${Math.round(share(o)*100)}%"></span></td></tr>`).join('');
+  return `<div class="tbl free"><table><thead><tr><th>${label}</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r g25">25 금액</th><th class="r g26">26 금액</th><th class="r">증감액</th><th class="r">증감률</th><th class="r">26 비중</th></tr></thead>
+  <tbody>${body}<tr class="tot"><td>합계</td><td class="r">${F.int(t.q25)}</td><td class="r">${F.int(t.q26)}</td><td class="r">${F.won(t.a25)}</td><td class="r">${F.won(t.a26)}</td><td class="r">${F.dw(t.a26-t.a25)}</td><td class="r">${dHtml(t.a26,t.a25)}</td><td class="r">100%</td></tr></tbody></table></div>`;
+}
+
+/* ---------- 차트 ---------- */
+const charts=[];
+function drawCharts(){for(const c of charts){const el=document.getElementById(c.id);if(el)c.fn(el)}}
+function tipShow(el,tip,x,y,html){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth,W=el.clientWidth;tip.style.left=Math.max(0,Math.min(W-w,x-w/2))+'px';tip.style.top=Math.max(0,y-tip.offsetHeight-10)+'px'}
+function axis(v,n=4){const st=niceMax(v/n);const mx=Math.ceil(v/st)*st||st;const t=[];for(let x=0;x<=mx+st/2;x+=st)t.push(x);return {max:mx,ticks:t,step:st}}
+function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p}
+function monthlyChart(el){
+  const W=Math.max(300,el.clientWidth),H=250,mt=12,mb=26;
+  const mm=Array.from({length:12},(_,i)=>({m:i+1,a25:0,a26:0,q25:0,q26:0}));
+  for(const r of R) if(r.paid){const o=mm[r.m-1];if(r.y===2025){o.a25+=r.a;o.q25+=r.q}else if(r.y===2026){o.a26+=r.a;o.q26+=r.q}}
+  const ax=axis(Math.max(...mm.map(o=>Math.max(o.a25,o.a26))));const max=ax.max,ticks=ax.ticks;const fy=v=>nf.format(v/1e6);
+  const ml=12+7*fy(max).length, x0=ml, cw=(W-x0-4)/12, bw=Math.min(18,cw*.36);
+  const y=v=>H-mb-(v/max)*(H-mt-mb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="월별 출고금액 2025년과 2026년 비교">`;
+  for(const t of ticks)s+=`<line class="gl" x1="${x0}" x2="${W-4}" y1="${y(t)}" y2="${y(t)}"/><text class="tk" x="${x0-6}" y="${y(t)}" dy=".32em" text-anchor="end">${fy(t)}</text>`;
+  mm.forEach((o,i)=>{const cx=x0+cw*i+cw/2;
+    s+=`<rect x="${cx-bw-1}" y="${y(o.a25)}" width="${bw}" height="${y(0)-y(o.a25)}" rx="2" fill="var(--y25)"/>`;
+    if(o.a26||o.m<=+CUT.slice(0,2))s+=`<rect x="${cx+1}" y="${y(o.a26)}" width="${bw}" height="${y(0)-y(o.a26)}" rx="2" fill="var(--y26)"/>`;
+    s+=`<text class="tk" x="${cx}" y="${H-8}" text-anchor="middle">${o.m}월</text><rect data-i="${i}" x="${x0+cw*i}" y="${mt}" width="${cw}" height="${H-mt-mb}" fill="transparent"/>`});
+  s+=`<text class="tk" x="${x0}" y="${mt-2}">백만원</text></svg><div class="tip" hidden></div>`;
+  el.innerHTML=s;const tip=$('.tip',el),sc=()=>el.clientWidth/W;
+  $$('rect[data-i]',el).forEach(rc=>{rc.addEventListener('mouseenter',()=>{const o=mm[+rc.dataset.i];const part=o.m===+CUT.slice(0,2)?` (26년은 ${+CUT.slice(3)}일까지)`:'';
+    tipShow(el,tip,(+rc.getAttribute('x')+cw/2)*sc(),y(Math.max(o.a25,o.a26))*sc(),`<div class="h">${o.m}월${part}</div><div class="row"><span><i style="background:var(--y25)"></i>2025</span><span class="num">${F.won(o.a25)}원 · ${F.int(o.q25)}개</span></div><div class="row"><span><i style="background:var(--y26)"></i>2026</span><span class="num">${o.m>+CUT.slice(0,2)?'–':F.won(o.a26)+'원 · '+F.int(o.q26)+'개'}</span></div>${o.m<=+CUT.slice(0,2)?`<div class="row"><span>증감</span>${dHtml(o.a26,o.a25)}</div>`:''}`)});
+    rc.addEventListener('mouseleave',()=>tip.hidden=true)});
+}
+function cumChart(el){
+  const W=Math.max(300,el.clientWidth),H=230,mt=14,mb=26;
+  const cm=+CUT.slice(0,2);
+  const c25=[],c26=[];let s25=0,s26=0;
+  for(let m=1;m<=12;m++){for(const r of R)if(r.paid&&r.m===m){if(r.y===2025)s25+=r.a;if(r.y===2026)s26+=r.a}c25.push(s25);if(m<=cm)c26.push(s26)}
+  const ax=axis(Math.max(s25,s26));const max=ax.max;const dg=ax.step%1e8?(ax.step%1e7?2:1):0;const fy=v=>(v/1e8).toFixed(dg);
+  const ml=12+7*(fy(max).length+1),x0=ml,cw=(W-x0-46)/11;
+  const X=i=>x0+cw*i,Y=v=>H-mb-(v/max)*(H-mt-mb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="누적 출고금액">`;
+  for(const t of ax.ticks)s+=`<line class="gl" x1="${x0}" x2="${W-46}" y1="${Y(t)}" y2="${Y(t)}"/><text class="tk" x="${x0-6}" y="${Y(t)}" dy=".32em" text-anchor="end">${fy(t)}</text>`;
+  for(let i=0;i<12;i+=1)if(i%2===0||W>520)s+=`<text class="tk" x="${X(i)}" y="${H-8}" text-anchor="middle">${i+1}월</text>`;
+  const pth=a=>a.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join('');
+  s+=`<path d="${pth(c25)}" fill="none" stroke="var(--y25)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s+=`<path d="${pth(c26)}" fill="none" stroke="var(--y26)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const i26=c26.length-1;
+  s+=`<circle cx="${X(i26)}" cy="${Y(c26[i26])}" r="4" fill="var(--y26)"/><circle cx="${X(i26)}" cy="${Y(c25[i26])}" r="3.5" fill="var(--y25)"/>`;
+  s+=`<text class="lb" x="${X(11)+6}" y="${Y(c25[11])}" dy=".32em">25년</text>`;
+  const ly=Math.abs(Y(c26[i26])-Y(c25[11]))<14?Y(c26[i26])+14:Y(c26[i26]);
+  s+=`<text class="lb" x="${X(i26)+8}" y="${ly}" dy=".32em" style="fill:var(--y26);font-weight:600">26년 ${F.man(c26[i26])}</text>`;
+  s+=`<text class="tk" x="${x0}" y="${mt-4}">억원</text></svg>`;
+  el.innerHTML=s;
+}
+
+/* ---------- 화면: 요약 ---------- */
+function vSum(){
+  const all=agg(()=> 'all')[0]||tot([]);
+  const pro=agg(r=>r.item,r=>r.item==='Bosu Professional')[0]||{};
+  const cust=agg(r=>r.cust);
+  const st=o=>o.a25&&!o.a26?'lost':!o.a25&&o.a26?'new':null;
+  const nNew=cust.filter(o=>st(o)==='new').length,nLost=cust.filter(o=>st(o)==='lost').length;
+  const aNew=cust.filter(o=>st(o)==='new').reduce((s,o)=>s+o.a26,0),aLost=cust.filter(o=>st(o)==='lost').reduce((s,o)=>s+o.a25,0);
+  const tile=(k,c,p,fmt,dfmt='dp')=>`<div class="tile"><div class="k">${k}</div><div class="v">${fmt(c)}</div><div class="prev">25년 <span class="num">${fmt(p)}</span> ${dfmt==='pt'?`<span class="d ${dcls(c-p)}">${(c-p>0?'+':'')+((c-p)*100).toFixed(1)}%p</span>`:dHtml(c,p)}</div></div>`;
+  const m25=all.a25?all.p25/all.a25:0,m26=all.a26?all.p26/all.a26:0;
+  const movers=cust.map(o=>({...o,d:o.a26-o.a25})).filter(o=>o.d);
+  const up=[...movers].sort((a,b)=>b.d-a.d).slice(0,6),dn=[...movers].sort((a,b)=>a.d-b.d).slice(0,6);
+  const mv=o=>`<div class="mover"><span class="n">${esc(o.k)}</span><span class="d ${dcls(o.d)}">${F.dman(o.d)}</span><span class="s">${F.man(o.a25)} → ${F.man(o.a26)} · ${esc(o.team)} ${esc(o.rep)}${st(o)==='new'?' · 신규':st(o)==='lost'?' · 올해 출고 없음':''}</span></div>`;
+  const sku=agg(r=>r.item).sort((a,b)=>b.a26-a.a26);
+  const cp=agg(r=>r.cust+'|'+r.item,r=>r.cust.includes('쿠팡')&&r.item==='Bosu Professional')[0];
+  const cpPrice=cp?Math.round((cp.a26||cp.a25)/(cp.q26||cp.q25)):null;
+  const qN=(y,q)=>R.filter(r=>r.paid&&r.y===y&&Math.ceil(r.m/3)===q&&(S.mode==='year'||r.md<=CUT)).reduce((s,r)=>s+r.a,0);
+  return crumb('요약')+
+  `<div class="tiles">
+    ${tile('출고금액 (공급가)',all.a26,all.a25,v=>F.man(v)+'원')}
+    ${tile('출고수량',all.q26,all.q25,v=>F.int(v)+'개')}
+    ${tile('거래 업체 수',all.c26.size,all.c25.size,v=>F.int(v)+'곳')}
+    ${tile('Professional 평균단가',pro.q26?pro.a26/pro.q26:0,pro.q25?pro.a25/pro.q25:0,v=>F.won(v)+'원')}
+    ${tile('추정 마진율',m26,m25,F.pct,'pt')}
+  </div>`+
+  panel('월별 출고금액','같은 달끼리 25년과 26년 비교, 막대에 올리면 금액·수량',`<div class="pb">${legend()}<div class="chart" id="cMonthly"></div></div>`)+
+  `<div class="grid2">`+
+    panel('누적 출고금액','1월부터 쌓은 금액, 26년 선이 25년 위에 있으면 앞서는 중',`<div class="pb"><div class="chart" id="cCum" style="min-height:230px"></div></div>`)+
+    panel('분기별 비교',lab(2026)+' 기준',`<div class="tbl free"><table><thead><tr><th>분기</th><th class="r g25">2025</th><th class="r g26">2026</th><th class="r">증감률</th></tr></thead><tbody>${[1,2,3,4].map(q=>{const a=qN(2025,q),b=qN(2026,q);return `<tr><td>${q}분기${q===4?` <span class="mut">(26년 ${+CUT.slice(0,2)}/${+CUT.slice(3)}까지)</span>`:''}</td><td class="r">${F.won(a)}</td><td class="r">${F.won(b)}</td><td class="r">${b||q<4?dHtml(b,a):'–'}</td></tr>`}).join('')}</tbody></table></div>`)+
+  `</div>`+
+  `<div class="grid2">`+
+    panel('많이 늘어난 거래처',lab(2026)+' vs '+lab(2025),`<div class="pb">${up.filter(o=>o.d>0).map(mv).join('')||'<p class="note">없음</p>'}</div>`)+
+    panel('많이 줄어든 거래처',lab(2026)+' vs '+lab(2025),`<div class="pb">${dn.filter(o=>o.d<0).map(mv).join('')||'<p class="note">없음</p>'}</div>`)+
+  `</div>`+
+  panel('회의용 요약','숫자는 위 비교 기간 기준',`<div class="pb"><ul class="facts">
+    <li><span class="pill ${all.a26>=all.a25?'up':'dn'}">전체</span><span>${lab(2026)} 출고금액 <b>${F.man(all.a26)}원</b>, 전년 같은 기간 <b>${F.man(all.a25)}원</b> 대비 ${dHtml(all.a26,all.a25)}. 수량은 ${F.int(all.q25)}개 → ${F.int(all.q26)}개 ${dHtml(all.q26,all.q25)}.${delta(all.a26,all.a25)>delta(all.q26,all.q25)?' 수량보다 금액이 나은 건 개당 단가가 높은 Professional 비중과 단가가 올랐기 때문입니다.':''}</span></li>
+    <li><span class="pill info">거래처</span><span>신규 거래처 <b>${nNew}곳</b>(${F.man(aNew)}원), 올해 출고가 없는 25년 거래처 <b>${nLost}곳</b>(25년 ${F.man(aLost)}원).</span></li>
+    <li><span class="pill info">SKU</span><span>${sku.map(o=>`${esc(o.k)} ${F.man(o.a25)} → ${F.man(o.a26)} ${dHtml(o.a26,o.a25)}`).join(' · ')}</span></li>
+    ${cp?`<li><span class="pill chk">단가</span><span>쿠팡 직매입 Professional 공급가 <b>${F.won(cpPrice)}원</b>, 입고원가 <b>${F.won(COST['Bosu Professional'])}원</b>과 차이가 ${F.won(cpPrice-COST['Bosu Professional'])}원뿐입니다. 25년부터 단가 변동 없음.</span></li>`:''}
+    <li><span class="pill info">유의</span><span>반품·불량 교환은 이 데이터에 없어서 순매출이 아니라 출고 기준입니다. 마진은 현재 입고원가로 계산한 추정치예요. 자세한 건 데이터 검토 메뉴에 있습니다.</span></li>
+  </ul></div>`);
+}
+
+/* ---------- 화면: 연도 비교 ---------- */
+function vYoy(){
+  const sku=agg(r=>r.item).sort((a,b)=>b.a26-a.a26);
+  const c1=agg(r=>r.c1).sort((a,b)=>b.a26-a.a26);
+  const c2=agg(r=>r.c1+' · '+r.c2).sort((a,b)=>b.a26-a.a26);
+  const team=agg(r=>r.team).sort((a,b)=>b.a26-a.a26);
+  const rep=agg(r=>r.rep||'(미지정)').sort((a,b)=>b.a26-a.a26);
+  const wel=agg(r=>r.cust,r=>r.team==='웰리플사업팀').sort((a,b)=>b.a26-a.a26);
+  return crumb('연도 비교')+
+  panel('SKU별',lab(2026)+' vs '+lab(2025),cmpTable(sku,'품목'))+
+  panel('거래처 구분별','ERP 거래처 대분류',cmpTable(c1,'구분'))+
+  panel('거래처 세부 구분별','대분류 · 중분류',cmpTable(c2,'구분'))+
+  panel('팀별','출고 당시 ERP 영업그룹 기준',`<p class="note" style="padding:10px 14px 0">26년 초에 팀 표기가 바뀐 담당자가 있습니다(예: 브랜드영업팀 → 리테일사업팀·스포츠마케팅팀). 팀별 증감은 담당자별 표와 같이 보세요.</p>`+cmpTable(team,'팀'))+
+  panel('담당자별','출고 당시 영업담당자 기준',cmpTable(rep,'담당자',{sub:o=>'최근 '+o.team}))+
+  panel('웰리플사업팀 거래처','우리 팀으로 잡힌 출고만',cmpTable(wel,'판매처',{sub:o=>o.rep}));
+}
+
+/* ---------- 화면: 거래처 ---------- */
+function custRows(){
+  const rows=agg(r=>r.cust).map(o=>{const st=o.a25&&!o.a26?'lost':!o.a25&&o.a26?'new':!o.a25&&!o.a26?'none':(o.a26/o.a25-1>0.1?'up':o.a26/o.a25-1<-0.1?'dn':'flat');return {...o,st,d:o.a26-o.a25,dr:delta(o.a26,o.a25),m26:o.a26?o.p26/o.a26:null,c1:(R.find(r=>r.cust===o.k)||{}).c1}});
+  return rows;
+}
+const ST={new:['new','신규'],lost:['lost','올해 없음'],up:['up','증가'],dn:['dn','감소'],flat:['flat','유지'],none:['flat','기간 외']};
+function vCust(){
+  const all=custRows();
+  const c1s=[...new Set(all.map(o=>o.c1))];
+  return crumb('거래처')+
+  panel('거래처별 출고 비교',lab(2026)+' vs '+lab(2025)+' · 행을 누르면 상세',
+  `<div class="tools"><input id="cq" type="search" placeholder="업체, 팀, 담당자 검색" aria-label="거래처 검색" value="${esc(S.cq)}">
+   <select id="cst" aria-label="상태"><option value="">상태 전체</option>${Object.entries({new:'신규',up:'증가',flat:'유지',dn:'감소',lost:'올해 없음'}).map(([k,v])=>`<option value="${k}" ${S.cst===k?'selected':''}>${v}</option>`).join('')}</select>
+   <select id="cc1" aria-label="구분"><option value="">구분 전체</option>${c1s.map(v=>`<option ${S.cc1===v?'selected':''}>${esc(v)}</option>`).join('')}</select>
+   <span class="count" id="ccount"></span></div>
+   <div class="tbl"><table id="ctab"><thead><tr>
+   ${[['k','판매처',''],['c1','구분',''],['rep','최근 담당',''],['q25','25 수량','r g25'],['q26','26 수량','r g26'],['a25','25 금액','r g25'],['a26','26 금액','r g26'],['d','증감액','r'],['dr','증감률','r'],['st','상태',''],['m26','26 추정마진','r'],['last','최근 출고','r']].map(([k,t,c])=>`<th class="${c}" ${S.csort.k===k?`aria-sort="${S.csort.dir>0?'ascending':'descending'}"`:''}><button data-k="${k}">${t}</button></th>`).join('')}
+   </tr></thead><tbody id="cbody"></tbody></table></div>`)+
+  `<div id="cdetail"></div>`;
+}
+function fillCust(){
+  const all=custRows();const q=S.cq.toLowerCase();
+  let rows=all.filter(o=>o.st!=='none'&&(!q||[o.k,o.team,o.rep,o.c1].join(' ').toLowerCase().includes(q))&&(!S.cst||o.st===S.cst)&&(!S.cc1||o.c1===S.cc1));
+  const {k,dir}=S.csort;
+  rows.sort((a,b)=>{let x=a[k],y=b[k];if(x===Infinity)x=1e9;if(y===Infinity)y=1e9;if(x==null)x=-1e9;if(y==null)y=-1e9;return typeof x==='number'?dir*(x-y):dir*String(x).localeCompare(String(y),'ko')});
+  const t=tot(rows);
+  $('#ccount').textContent=`${rows.length}곳 · 26 ${F.man(t.a26)}원 / 25 ${F.man(t.a25)}원`;
+  $('#cbody').innerHTML=rows.map(o=>`<tr class="click ${S.csel===o.k?'sel':''}" data-k="${esc(o.k)}"><td class="name"><b>${esc(o.k)}</b></td><td>${esc(o.c1)}</td><td>${esc(o.rep)} <span class="mut">${esc(o.team)}</span></td>
+   <td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td><td class="r">${F.won(o.a25)}</td><td class="r">${F.won(o.a26)}</td>
+   <td class="r ${o.d<0?'neg':''}">${F.dw(o.d)}</td><td class="r">${o.st==='new'?'<span class="d up">신규</span>':dHtml(o.a26,o.a25)}</td><td><span class="pill ${ST[o.st][0]}">${ST[o.st][1]}</span></td>
+   <td class="r ${o.m26!=null&&o.m26<0.1?'neg':''}">${F.pct(o.m26)}</td><td class="r">${o.last.slice(2).replace(/-/g,'.')}</td></tr>`).join('');
+  $$('#cbody tr').forEach(tr=>tr.addEventListener('click',()=>{S.csel=tr.dataset.k;fillCust();custDetail();$('#cdetail').scrollIntoView({behavior:'smooth',block:'start'})}));
+}
+function custDetail(){
+  const el=$('#cdetail');if(!S.csel){el.innerHTML='';return}
+  const rs=R.filter(r=>r.cust===S.csel);
+  const sku=agg(r=>r.item,r=>r.cust===S.csel);
+  const ln=rs.slice().sort((a,b)=>b.dt.localeCompare(a.dt));
+  el.innerHTML=`<section class="panel detail"><div class="ph"><h2>${esc(S.csel)}</h2><span class="sub">${esc(rs[0]?.c1)} · ${esc(rs[0]?.c2)}</span><span class="sp"></span><button class="seg" id="cclose" style="padding:4px 10px;font-size:12px">닫기</button></div>
+   <div class="pb">${legend()}<div class="chart" id="cCustM" style="min-height:180px"></div></div>
+   <div class="tbl free"><table><thead><tr><th>품목</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 평균단가</th><th class="r">입고원가</th><th class="r">26 추정마진</th></tr></thead><tbody>
+   ${sku.map(o=>`<tr><td><b>${esc(o.k)}</b></td><td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td><td class="r">${o.q25?F.won(o.a25/o.q25):'–'}</td><td class="r">${o.q26?F.won(o.a26/o.q26):'–'}</td><td class="r">${F.won(COST[o.k])}</td><td class="r ${o.a26&&o.p26/o.a26<0.1?'neg':''}">${o.a26?F.pct(o.p26/o.a26):'–'}</td></tr>`).join('')}
+   </tbody></table></div>
+   <div class="ph" style="border-radius:0;border-top:1px solid var(--line)"><h2>출고 내역</h2><span class="sub">${ln.length}건 · 0원 출고 포함</span></div>
+   <div class="tbl" style="max-height:20rem"><table><thead><tr><th>출고일</th><th>품목</th><th class="r">수량</th><th class="r">공급가</th><th class="r">개당</th><th>담당</th><th>수주유형</th></tr></thead><tbody>
+   ${ln.map(r=>`<tr><td class="num">${r.dt}</td><td>${esc(r.item)}</td><td class="r">${F.int(r.q)}</td><td class="r">${F.won(r.a)}</td><td class="r ${r.paid&&r.a/r.q<COST[r.item]?'neg':''}">${r.paid?F.won(r.a/r.q):'0'}</td><td>${esc(r.rep)} <span class="mut">${esc(r.team)}</span></td><td class="mut">${esc(r.type)}</td></tr>`).join('')}
+   </tbody></table></div></section>`;
+  $('#cclose').addEventListener('click',()=>{S.csel=null;fillCust();custDetail()});
+  custMonthly($('#cCustM'));
+}
+function custMonthly(el){
+  if(!el)return;const W=Math.max(300,el.clientWidth),H=180,mt=10,mb=24;
+  const mm=Array.from({length:12},(_,i)=>({m:i+1,a25:0,a26:0}));
+  for(const r of R)if(r.paid&&r.cust===S.csel){if(r.y===2025)mm[r.m-1].a25+=r.a;if(r.y===2026)mm[r.m-1].a26+=r.a}
+  const ax=axis(Math.max(1,...mm.map(o=>Math.max(o.a25,o.a26))),2);const max=ax.max;const fy=v=>F.man(v);
+  const ml=14+7*fy(max).length,cw=(W-ml-4)/12,bw=Math.min(16,cw*.36),y=v=>H-mb-(v/max)*(H-mt-mb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="월별 출고금액">`;
+  for(const t of ax.ticks)s+=`<line class="gl" x1="${ml}" x2="${W-4}" y1="${y(t)}" y2="${y(t)}"/><text class="tk" x="${ml-6}" y="${y(t)}" dy=".32em" text-anchor="end">${fy(t)}</text>`;
+  mm.forEach((o,i)=>{const cx=ml+cw*i+cw/2;if(o.a25)s+=`<rect x="${cx-bw-1}" y="${y(o.a25)}" width="${bw}" height="${y(0)-y(o.a25)}" rx="2" fill="var(--y25)"><title>25년 ${o.m}월 ${F.won(o.a25)}원</title></rect>`;if(o.a26)s+=`<rect x="${cx+1}" y="${y(o.a26)}" width="${bw}" height="${y(0)-y(o.a26)}" rx="2" fill="var(--y26)"><title>26년 ${o.m}월 ${F.won(o.a26)}원</title></rect>`;s+=`<text class="tk" x="${cx}" y="${H-7}" text-anchor="middle">${o.m}</text>`});
+  el.innerHTML=s+'</svg>';
+}
+
+/* ---------- 화면: SKU · 단가 ---------- */
+function vSku(){
+  const sku=agg(r=>r.item).sort((a,b)=>(b.a25+b.a26)-(a.a25+a.a26));
+  const cs=agg(r=>r.cust,r=>r.item===S.sku).sort((a,b)=>(b.q25+b.q26)-(a.q25+a.q26));
+  const cost=COST[S.sku];
+  const below=agg(r=>r.cust+'|'+r.item,r=>r.a/r.q<COST[r.item]).map(o=>{const [c,i]=o.k.split('|');return {...o,c,i}}).filter(o=>o.q25+o.q26);
+  const mg=(a,p)=>a?p/a:null;
+  return crumb('SKU · 단가')+
+  panel('SKU별 단가와 마진','마진은 현재 입고원가로 계산한 추정치',`<div class="tbl free"><table><thead><tr><th>품목</th><th class="r">입고원가</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 평균단가</th><th class="r">단가 변화</th><th class="r g25">25 마진</th><th class="r g26">26 마진</th></tr></thead><tbody>
+   ${sku.map(o=>{const p25=o.q25?o.a25/o.q25:0,p26=o.q26?o.a26/o.q26:0;return `<tr><td><b>${esc(o.k)}</b></td><td class="r">${F.won(COST[o.k])}</td><td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td><td class="r">${F.won(p25)}</td><td class="r">${F.won(p26)}</td><td class="r">${dHtml(p26,p25)}</td><td class="r ${mg(o.a25,o.p25)<0.1?'neg':''}">${F.pct(mg(o.a25,o.p25))}</td><td class="r ${mg(o.a26,o.p26)<0.1?'neg':''}">${F.pct(mg(o.a26,o.p26))}</td></tr>`}).join('')}
+   </tbody></table></div>`)+
+  panel('거래처별 공급단가',`${esc(S.sku)} · 입고원가 ${F.won(cost)}원`,
+   `<div class="tbl"><table><thead><tr><th>판매처</th><th>최근 담당</th><th class="r g25">25 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 수량</th><th class="r g26">26 평균단가</th><th class="r">단가 변화</th><th class="r">원가 대비</th><th class="r">추정 마진율</th></tr></thead><tbody>
+   ${cs.map(o=>{const p25=o.q25?o.a25/o.q25:null,p26=o.q26?o.a26/o.q26:null,pl=p26??p25,m=(pl-cost)/pl;return `<tr><td class="name"><b>${esc(o.k)}</b></td><td>${esc(o.rep)} <span class="mut">${esc(o.team)}</span></td><td class="r">${F.int(o.q25)}</td><td class="r">${p25?F.won(p25):'–'}</td><td class="r">${F.int(o.q26)}</td><td class="r">${p26?F.won(p26):'–'}</td><td class="r">${p25&&p26?dHtml(p26,p25):'–'}</td><td class="r ${pl<cost?'neg':''}">${F.dw(pl-cost)}</td><td class="r ${m<0.1?'neg':m<0.2?'warn':''}">${F.pct(m)}</td></tr>`}).join('')}
+   </tbody></table></div>`,
+   `<select id="skuSel" aria-label="SKU 선택" style="height:28px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:12px">${Object.keys(COST).map(k=>`<option ${k===S.sku?'selected':''}>${esc(k)}</option>`).join('')}</select>`)+
+  panel('입고원가보다 낮게 나간 출고','개당 공급가 < 입고원가인 출고만 모음',`<div class="tbl free"><table><thead><tr><th>판매처</th><th>품목</th><th>담당</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r">평균단가</th><th class="r">입고원가</th><th class="r">원가 대비 부족</th></tr></thead><tbody>
+   ${below.length?below.sort((a,b)=>(a.a25+a.a26-COST[a.i]*(a.q25+a.q26))-(b.a25+b.a26-COST[b.i]*(b.q25+b.q26))).map(o=>{const q=o.q25+o.q26,a=o.a25+o.a26;return `<tr><td class="name"><b>${esc(o.c)}</b></td><td>${esc(o.i)}</td><td>${esc(o.rep)}</td><td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td><td class="r">${F.won(a/q)}</td><td class="r">${F.won(COST[o.i])}</td><td class="r neg">${F.dw(a-COST[o.i]*q)}</td></tr>`}).join(''):'<tr><td colspan="8" class="mut">없음</td></tr>'}
+   </tbody></table></div>`);
+}
+
+/* ---------- 화면: 데이터 검토 ---------- */
+const LV={chk:['chk','확인 필요'],fix:['fix','보정함'],info:['info','참고'],ok:['ok','이상 없음']};
+function vChk(){
+  return `<div class="crumb">BOSU 분석 › <b>데이터 검토</b></div>`+
+  panel('원본 데이터 검토 결과',`${esc(P.meta.source)} · ${F.int(P.meta.nRows)}행`,
+   `<div class="pb" style="border-bottom:1px solid var(--line-2)"><p class="note">ERP 출고현황 엑셀 전체를 한 줄씩 점검했습니다. <b>확인 필요</b>는 담당자 확인이 필요한 건, <b>보정함</b>은 분석에서 고쳐서 쓴 건, <b>참고</b>는 해석할 때 알아둘 점입니다.</p></div>`+
+   P.issues.map(i=>`<div class="issue"><h3><span class="pill ${LV[i.level][0]}">${LV[i.level][1]}</span>${esc(i.title)}</h3><p>${esc(i.detail)}</p>${i.rows&&i.rows.length?`<details><summary>해당 내역 ${i.rows.length}건 보기</summary><div class="tbl"><table><thead><tr>${i.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${i.rows.map(r=>`<tr>${r.map((v,j)=>`<td class="${typeof v==='number'?'r':''}">${typeof v==='number'?F.won(v):esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`:''}</div>`).join(''));
+}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  charts.length=0;
+  const m=$('#main');
+  if(S.v==='sum'){m.innerHTML=vSum();charts.push({id:'cMonthly',fn:monthlyChart},{id:'cCum',fn:cumChart})}
+  else if(S.v==='yoy')m.innerHTML=vYoy();
+  else if(S.v==='cust'){m.innerHTML=vCust();fillCust();custDetail();charts.push({id:'cCustM',fn:custMonthly});
+    $('#cq').addEventListener('input',e=>{S.cq=e.target.value.trim();fillCust()});
+    $('#cst').addEventListener('change',e=>{S.cst=e.target.value;fillCust()});
+    $('#cc1').addEventListener('change',e=>{S.cc1=e.target.value;fillCust()});
+    $$('#ctab th button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;S.csort={k,dir:S.csort.k===k?-S.csort.dir:(['k','c1','rep','st'].includes(k)?1:-1)};$$('#ctab th').forEach(th=>th.removeAttribute('aria-sort'));b.parentElement.setAttribute('aria-sort',S.csort.dir>0?'ascending':'descending');fillCust()}));}
+  else if(S.v==='sku'){m.innerHTML=vSku();$('#skuSel').addEventListener('change',e=>{S.sku=e.target.value;render()})}
+  else m.innerHTML=vChk();
+  $('#nCust').textContent=new Set(R.filter(r=>r.paid&&(inP(r,2025)||inP(r,2026))).map(r=>r.cust)).size;
+  bindCrumb();drawCharts();
+}
+
+/* ---------- 잠금 ---------- */
+const b64=s=>Uint8Array.from(atob(s),x=>x.charCodeAt(0));
+const wrap=document.createElement('div');wrap.className='lock';
+wrap.innerHTML='<form id="lockf" autocomplete="off"><h2>웰리플사업팀 BOSU 출고분석</h2><div class="by">by PDS</div><p>팀 전용 화면입니다. 비밀번호를 입력하세요.</p><input id="lockpw" type="password" inputmode="numeric" autocomplete="current-password" aria-label="비밀번호" autofocus><div class="err" id="lockerr"></div><button type="submit" id="lockbtn">열기</button></form>';
+document.body.appendChild(wrap);
+const f=$('#lockf'),inp=$('#lockpw'),err=$('#lockerr'),btn=$('#lockbtn');
+setTimeout(()=>inp.focus(),50);
+f.addEventListener('submit',async e=>{e.preventDefault();if(!inp.value)return;btn.disabled=true;btn.textContent='여는 중…';err.textContent='';
+  try{
+    if(!(window.crypto&&crypto.subtle))throw new Error('nocrypto');
+    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(inp.value),'PBKDF2',false,['deriveKey']);
+    const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(E.s),iterations:E.n,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+    let pt;try{pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(E.i)},k,b64(E.c))}catch(x){throw new Error('bad')}
+    const o=JSON.parse(new TextDecoder().decode(pt));wrap.remove();boot(o);
+  }catch(x){console.error(x);err.textContent=x.message==='bad'?'비밀번호가 맞지 않습니다.':'이 브라우저에서는 열 수 없습니다. 크롬이나 엣지로 열어 주세요.';inp.select();btn.disabled=false;btn.textContent='열기'}
+});
+})();
+</script>
+</body></html>
