@@ -141,6 +141,18 @@ tr.tot td{font-weight:700;background:var(--sunk)}
 .mover .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mover .s{grid-column:1/-1;font-size:13.5px;color:var(--ink-3);font-weight:400}
 .detail{border-top:2px solid var(--accent)}
+.ladder{display:grid;gap:10px}
+.lad{display:grid;grid-template-columns:minmax(9rem,16rem) minmax(0,1fr);gap:14px;align-items:center}
+.lad .lt{font-size:15px;font-weight:600;line-height:1.35}
+.lad .lt small{display:block;font-size:12.5px;font-weight:400;color:var(--ink-3)}
+.lad .tr{position:relative;height:34px;background:var(--sunk);border-radius:4px}
+.lad .tr b{position:absolute;inset:0 auto 0 0;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;color:#fff;font-family:var(--f-mono);font-size:14.5px;font-weight:700;white-space:nowrap}
+.lad .tr b.ext{background:var(--bad)} .lad .tr b.us{background:var(--accent)} .lad .tr b.old{background:var(--y25);color:var(--ink)}
+.lad .cl{position:absolute;top:-6px;bottom:-6px;width:0;border-left:2px dashed var(--ink)}
+.cl-key{font-size:13.5px;color:var(--ink-2);display:flex;gap:8px;align-items:center}
+.cl-key i{display:inline-block;width:18px;border-top:2px dashed var(--ink)}
+td.hl{background:var(--accent-soft)!important;font-weight:700}
+@media (max-width:720px){.lad{grid-template-columns:1fr;gap:4px}}
 .ts{display:grid;gap:18px}
 .ts-row{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:12px;align-items:center}
 .ts-row .yr{font-size:16px;font-weight:700}
@@ -212,6 +224,7 @@ tr.tot td{font-weight:700;background:var(--sunk)}
     <button class="nav" data-v="yoy" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13l-3-3M21 17H8l3 3"/></svg><span class="lbl">연도 비교</span></button>
     <button class="nav" data-v="cust" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13M9 21v-6h6v6"/></svg><span class="lbl">거래처</span><span class="cnt" id="nCust"></span></button>
     <button class="nav" data-v="sku" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12 12 20l-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl">SKU · 단가</span></button>
+    <button class="nav" data-v="nego" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="lbl">단가 네고 근거</span></button>
     <button class="nav" data-v="chk" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span class="lbl">데이터 검토</span><span class="cnt alert" id="nChk"></span></button>
     <div class="grp">바로가기</div>
     <a class="nav" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><span class="lbl">견적 관리프로그램</span></a>
@@ -249,7 +262,7 @@ function boot(payload){
   $('#nChk').textContent=P.issues.filter(i=>i.level==='chk').length||'';
   $('#shell').hidden=false;
   $$('.nav[data-v]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
-  const h=location.hash.slice(1); go(['sum','yoy','cust','sku','chk'].includes(h)?h:'sum');
+  const h=location.hash.slice(1); go(['sum','yoy','cust','sku','nego','chk'].includes(h)?h:'sum');
   let rt; addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>drawCharts(),120)});
 }
 function go(v){S.v=v;$$('.nav[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));history.replaceState(null,'','#'+v);render();window.scrollTo(0,0)}
@@ -411,8 +424,8 @@ function vSum(){
     <li><span class="pill ${all.a26>=all.a25?'up':'dn'}">전체</span><span>${lab(2026)} 출고금액 <b>${F.man(all.a26)}원</b>, 전년 같은 기간 <b>${F.man(all.a25)}원</b> 대비 ${dHtml(all.a26,all.a25)}. 수량은 ${F.int(all.q25)}개 → ${F.int(all.q26)}개 ${dHtml(all.q26,all.q25)}.${delta(all.a26,all.a25)>delta(all.q26,all.q25)?' 수량보다 금액이 나은 건 개당 단가가 높은 Professional 비중과 단가가 올랐기 때문입니다.':''}</span></li>
     <li><span class="pill info">거래처</span><span>신규 거래처 <b>${nNew}곳</b>(${F.man(aNew)}원), 올해 출고가 없는 25년 거래처 <b>${nLost}곳</b>(25년 ${F.man(aLost)}원).</span></li>
     <li><span class="pill info">SKU</span><span>${sku.map(o=>`${esc(o.k)} ${F.man(o.a25)} → ${F.man(o.a26)} ${dHtml(o.a26,o.a25)}`).join(' · ')}</span></li>
-    ${cp?`<li><span class="pill chk">단가</span><span>쿠팡 직매입 Professional 공급가 <b>${F.won(cpPrice)}원</b>, 입고원가 <b>${F.won(COST['Bosu Professional'])}원</b>과 차이가 ${F.won(cpPrice-COST['Bosu Professional'])}원뿐입니다. 25년부터 단가 변동 없음.</span></li>`:''}
-    <li><span class="pill info">유의</span><span>반품·불량 교환은 이 데이터에 없어서 순매출이 아니라 출고 기준입니다. 마진은 현재 입고원가로 계산한 추정치예요. 자세한 건 데이터 검토 메뉴에 있습니다.</span></li>
+    ${cp?`<li><span class="pill chk">단가</span><span>쿠팡 직매입 Professional 공급가 <b>${F.won(cpPrice)}원</b>, 표준원가 <b>${F.won(COST['Bosu Professional'])}원</b>과 차이가 ${F.won(cpPrice-COST['Bosu Professional'])}원뿐입니다. 25년부터 단가 변동 없음.</span></li>`:''}
+    <li><span class="pill info">유의</span><span>반품·불량 교환은 이 데이터에 없어서 순매출이 아니라 출고 기준입니다. 마진은 2026 표준원가로 계산한 추정치예요. 자세한 건 데이터 검토 메뉴에 있습니다.</span></li>
   </ul></div>`);
 }
 
@@ -473,7 +486,7 @@ function custDetail(){
   const ln=rs.slice().sort((a,b)=>b.dt.localeCompare(a.dt));
   el.innerHTML=`<section class="panel detail"><div class="ph"><h2>${esc(S.csel)}</h2><span class="sub">${esc(rs[0]?.c1)} · ${esc(rs[0]?.c2)}</span><span class="sp"></span><button class="seg" id="cclose" style="padding:4px 10px;font-size:12px">닫기</button></div>
    <div class="pb">${legend()}<div class="chart" id="cCustM" style="min-height:180px"></div></div>
-   <div class="tbl free"><table><thead><tr><th>품목</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 평균단가</th><th class="r">입고원가</th><th class="r">26 추정마진</th></tr></thead><tbody>
+   <div class="tbl free"><table><thead><tr><th>품목</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 평균단가</th><th class="r">표준원가</th><th class="r">26 추정마진</th></tr></thead><tbody>
    ${sku.map(o=>`<tr><td><b>${esc(o.k)}</b></td><td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td><td class="r">${o.q25?F.won(o.a25/o.q25):'–'}</td><td class="r">${o.q26?F.won(o.a26/o.q26):'–'}</td><td class="r">${F.won(COST[o.k])}</td><td class="r ${o.a26&&o.p26/o.a26<0.1?'neg':''}">${o.a26?F.pct(o.p26/o.a26):'–'}</td></tr>`).join('')}
    </tbody></table></div>
    <div class="ph" style="border-radius:0;border-top:1px solid var(--line)"><h2>출고 내역</h2><span class="sub">${ln.length}건 · 0원 출고 포함</span></div>
@@ -503,17 +516,48 @@ function vSku(){
   const below=agg(r=>r.cust+'|'+r.item,r=>r.a/r.q<COST[r.item]).map(o=>{const [c,i]=o.k.split('|');return {...o,c,i}}).filter(o=>o.q25+o.q26);
   const mg=(a,p)=>a?p/a:null;
   return crumb('SKU · 단가')+
-  panel('SKU별 단가와 마진','마진은 현재 입고원가로 계산한 추정치',`<div class="tbl free"><table><thead><tr><th>품목</th><th class="r">입고원가</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 평균단가</th><th class="r">단가 변화</th><th class="r g25">25 마진</th><th class="r g26">26 마진</th></tr></thead><tbody>
+  panel('SKU별 단가와 마진','마진은 2026 표준원가로 계산한 추정치',`<div class="tbl free"><table><thead><tr><th>품목</th><th class="r">표준원가</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 평균단가</th><th class="r">단가 변화</th><th class="r g25">25 마진</th><th class="r g26">26 마진</th></tr></thead><tbody>
    ${sku.map(o=>{const p25=o.q25?o.a25/o.q25:0,p26=o.q26?o.a26/o.q26:0;return `<tr><td><b>${esc(o.k)}</b></td><td class="r">${F.won(COST[o.k])}</td><td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td><td class="r">${F.won(p25)}</td><td class="r">${F.won(p26)}</td><td class="r">${dHtml(p26,p25)}</td><td class="r ${mg(o.a25,o.p25)<0.1?'neg':''}">${F.pct(mg(o.a25,o.p25))}</td><td class="r ${mg(o.a26,o.p26)<0.1?'neg':''}">${F.pct(mg(o.a26,o.p26))}</td></tr>`}).join('')}
    </tbody></table></div>`)+
-  panel('거래처별 공급단가',`${esc(S.sku)} · 입고원가 ${F.won(cost)}원`,
+  panel('거래처별 공급단가',`${esc(S.sku)} · 표준원가 ${F.won(cost)}원`,
    `<div class="tbl"><table><thead><tr><th>판매처</th><th>최근 담당</th><th class="r g25">25 수량</th><th class="r g25">25 평균단가</th><th class="r g26">26 수량</th><th class="r g26">26 평균단가</th><th class="r">단가 변화</th><th class="r">원가 대비</th><th class="r">추정 마진율</th></tr></thead><tbody>
    ${cs.map(o=>{const p25=o.q25?o.a25/o.q25:null,p26=o.q26?o.a26/o.q26:null,pl=p26??p25,m=(pl-cost)/pl;return `<tr><td class="name"><b>${esc(o.k)}</b></td><td>${esc(o.rep)} <span class="mut">${esc(o.team)}</span></td><td class="r">${F.int(o.q25)}</td><td class="r">${p25?F.won(p25):'–'}</td><td class="r">${F.int(o.q26)}</td><td class="r">${p26?F.won(p26):'–'}</td><td class="r">${p25&&p26?dHtml(p26,p25):'–'}</td><td class="r ${pl<cost?'neg':''}">${F.dw(pl-cost)}</td><td class="r ${m<0.1?'neg':m<0.2?'warn':''}">${F.pct(m)}</td></tr>`}).join('')}
    </tbody></table></div>`,
    `<select id="skuSel" aria-label="SKU 선택" style="height:28px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:12px">${Object.keys(COST).map(k=>`<option ${k===S.sku?'selected':''}>${esc(k)}</option>`).join('')}</select>`)+
-  panel('입고원가보다 낮게 나간 출고','개당 공급가 < 입고원가인 출고만 모음',`<div class="tbl free"><table><thead><tr><th>판매처</th><th>품목</th><th>담당</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r">평균단가</th><th class="r">입고원가</th><th class="r">원가 대비 부족</th></tr></thead><tbody>
+  panel('표준원가보다 낮게 나간 출고','개당 공급가 < 표준원가인 출고만 모음',`<div class="tbl free"><table><thead><tr><th>판매처</th><th>품목</th><th>담당</th><th class="r g25">25 수량</th><th class="r g26">26 수량</th><th class="r">평균단가</th><th class="r">표준원가</th><th class="r">원가 대비 부족</th></tr></thead><tbody>
    ${below.length?below.sort((a,b)=>(a.a25+a.a26-COST[a.i]*(a.q25+a.q26))-(b.a25+b.a26-COST[b.i]*(b.q25+b.q26))).map(o=>{const q=o.q25+o.q26,a=o.a25+o.a26;return `<tr><td class="name"><b>${esc(o.c)}</b></td><td>${esc(o.i)}</td><td>${esc(o.rep)}</td><td class="r">${F.int(o.q25)}</td><td class="r">${F.int(o.q26)}</td><td class="r">${F.won(a/q)}</td><td class="r">${F.won(COST[o.i])}</td><td class="r neg">${F.dw(a-COST[o.i]*q)}</td></tr>`}).join(''):'<tr><td colspan="8" class="mut">없음</td></tr>'}
    </tbody></table></div>`);
+}
+
+/* ---------- 화면: 단가 네고 근거 ---------- */
+function vNego(){
+  const N=P.nego, PRO='Bosu Professional', C=COST[PRO], ex=v=>v/1.1, mg=(vat,c)=>(ex(vat)-c)/ex(vat);
+  if(!N)return `<div class="crumb">BOSU 분석 › <b>단가 네고 근거</b></div>`+panel('설정 없음','',`<div class="pb"><p class="note">단가 네고 설정이 없습니다.</p></div>`);
+  const acc=new Set(N.accounts);
+  const grp=r=>r.cust.includes('쿠팡')?'cp':acc.has(r.cust)?'acc':'etc';
+  const G={cp:'쿠팡 직매입',acc:'주요 대리점 '+N.accounts.length+'곳',etc:'그 외 채널'};
+  const ytd=(y,g)=>R.filter(r=>r.paid&&r.item===PRO&&r.y===y&&r.md<=CUT&&(!g||grp(r)===g)).reduce((s,r)=>s+r.q,0);
+  const days=(new Date(P.meta.maxDate)-new Date(P.meta.maxDate.slice(0,4)+'-01-01'))/864e5+1;
+  const ann=g=>Math.round(R.filter(r=>r.paid&&r.item===PRO&&r.y===2026&&grp(r)===g).reduce((s,r)=>s+r.q,0)/days*365);
+  const cur={cp:ann('cp'),acc:ann('acc'),etc:ann('etc')}, hope={cp:N.fc.cp,acc:N.fc.acc,etc:ann('etc')};
+  const sum=o=>o.cp+o.acc+o.etc;
+  const mx=Math.max(...N.market.map(m=>m.vat))*1.04, cvat=C*1.1;
+  const lad=N.market.map(m=>`<div class="lad"><div class="lt">${esc(m.label)}${m.note?`<small>${esc(m.note)}</small>`:''}</div><div class="tr"><b class="${m.kind}" style="width:${(m.vat/mx*100).toFixed(1)}%">${F.won(m.vat)}원</b><span class="cl" style="left:${(cvat/mx*100).toFixed(1)}%"></span></div></div>`).join('');
+  const chs=N.channels;
+  const scen=N.scen.map(s=>`<tr><td class="name"><b>${esc(s.label)}</b>${s.note?`<div class="mut" style="font-size:12.5px">${esc(s.note)}</div>`:''}</td><td class="r">${F.won(s.cost)}</td><td class="r">${s.cost===C?'–':F.dp(s.cost/C-1)}</td>${chs.map(c=>{const m=mg(c.vat,s.cost);return `<td class="r ${m<0.1?'neg':m<0.2?'warn':''}">${F.pct(m)}</td>`}).join('')}</tr>`).join('');
+  const trend=['cp','acc','etc'].map(g=>{const a=ytd(2025,g),b=ytd(2026,g);return `<tr><td><b>${G[g]}</b></td><td class="r">${F.int(a)}</td><td class="r">${F.int(b)}</td><td class="r">${dHtml(b,a)}</td></tr>`}).join('');
+  const cpPrice=N.channels[0]?ex(N.channels[0].vat):0;
+  return `<div class="crumb">BOSU 분석 › <b>단가 네고 근거</b><span class="sp"></span><span>Bosu Professional (BS10850-5P) · 2026 표준원가 기준</span></div>`+
+  `<div class="tiles">
+    <div class="tile"><div class="k">2026 표준원가 (VAT 별도)</div><div class="v">${F.won(C)}원</div><div class="prev">부가세 포함 환산 ${F.won(cvat)}원</div></div>
+    ${chs.map(c=>`<div class="tile"><div class="k">${esc(c.label)}</div><div class="v ${mg(c.vat,C)<0.1?'neg':''}">${F.pct(mg(c.vat,C))}</div><div class="prev">공급가 ${F.won(c.vat)}원 (VAT 포함) · 원가 기준 이익률</div></div>`).join('')}
+  </div>`+
+  panel('시장 가격 비교','부가세 포함 · 점선은 표준원가(부가세 포함 환산)',`<div class="pb ladder"><div class="cl-key"><i></i>표준원가 ${F.won(cvat)}원 (VAT 포함 환산)</div>${lad}<p class="note">코스트코 물량 리셀러 판매가가 당사 대리점 공급가보다 낮습니다. 쿠팡 공급가는 표준원가와 거의 같습니다.</p></div>`)+
+  panel('희망원가별 채널 이익률','원가 기준 이익률 · 쿠팡 비용(판매수수료 등) 미반영',`<div class="tbl free"><table><thead><tr><th>원가 시나리오</th><th class="r">원가 (VAT 별도)</th><th class="r">표준원가 대비</th>${chs.map(c=>`<th class="r">${esc(c.label)}</th>`).join('')}</tr></thead><tbody>${scen}</tbody></table></div>`)+
+  `<div class="grid2">`+
+  panel('판매 추이','Professional · 두 해 모두 1/1~'+(+CUT.slice(0,2))+'/'+(+CUT.slice(3)),`<div class="tbl free"><table><thead><tr><th>채널</th><th class="r g25">2025</th><th class="r g26">2026</th><th class="r">증감</th></tr></thead><tbody>${trend}<tr class="tot"><td>합계</td><td class="r">${F.int(ytd(2025))}</td><td class="r">${F.int(ytd(2026))}</td><td class="r">${dHtml(ytd(2026),ytd(2025))}</td></tr></tbody></table></div><div class="pb"><p class="note">주요 대리점: ${N.accounts.map(esc).join(', ')}</p></div>`)+
+  panel('2027년 예상 판매수량','Professional · 현행은 2026년 연환산',`<div class="tbl free"><table><thead><tr><th>채널</th><th class="r">현행 단가</th><th class="r">희망 단가</th><th class="r">증감</th></tr></thead><tbody>${['cp','acc','etc'].map(g=>`<tr><td><b>${G[g]}</b></td><td class="r">${F.int(cur[g])}</td><td class="r">${F.int(hope[g])}</td><td class="r">${dHtml(hope[g],cur[g])}</td></tr>`).join('')}<tr class="tot"><td>합계</td><td class="r">${F.int(sum(cur))}</td><td class="r">${F.int(sum(hope))}</td><td class="r">${dHtml(sum(hope),sum(cur))}</td></tr></tbody></table></div><div class="pb"><p class="note">${esc(N.fcNote||'')}</p></div>`)+
+  `</div>`;
 }
 
 /* ---------- 화면: 데이터 검토 ---------- */
@@ -536,6 +580,7 @@ function render(){
     $('#cst').addEventListener('change',e=>{S.cst=e.target.value;fillCust()});
     $('#cc1').addEventListener('change',e=>{S.cc1=e.target.value;fillCust()});
     $$('#ctab th button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;S.csort={k,dir:S.csort.k===k?-S.csort.dir:(['k','c1','rep','st'].includes(k)?1:-1)};$$('#ctab th').forEach(th=>th.removeAttribute('aria-sort'));b.parentElement.setAttribute('aria-sort',S.csort.dir>0?'ascending':'descending');fillCust()}));}
+  else if(S.v==='nego')m.innerHTML=vNego();
   else if(S.v==='sku'){m.innerHTML=vSku();$('#skuSel').addEventListener('change',e=>{S.sku=e.target.value;render()})}
   else m.innerHTML=vChk();
   $('#nCust').textContent=new Set(R.filter(r=>r.paid&&(inP(r,2025)||inP(r,2026))).map(r=>r.cust)).size;

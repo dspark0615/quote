@@ -3,7 +3,7 @@
 사용법:
   python3 build_bosu.py <ERP 출고현황.xlsx> <입고원가.json> <비밀번호> [출력 경로]
 
-입고원가.json 예: {"Bosu Professional": 161058, "Bosu PODS (2PACK)": 29215, "Bosu Dome": 83944}
+원가 설정 json: {"cost": {품목명: 표준원가(VAT 별도)}, "nego": {단가 네고 화면 설정}} 또는 {품목명: 원가}
 원가·출고 데이터는 저장소에 올리지 말 것. 결과 HTML 안에는 비밀번호로 암호화되어 들어간다.
 """
 import base64, json, os, sys
@@ -139,8 +139,8 @@ def issues_for(d, total_row, cost):
     mx = d['출고일'].max()
     out.append(dict(level='info', title=f'{mx.year}년 {mx.month}월은 {mx.day}일까지만 들어 있음',
                     detail=f'그래서 기본 비교는 두 해 모두 1월 1일~{mx.month}월 {mx.day}일 같은 기간으로 맞췄습니다. 25년 연간과 비교하려면 위의 "연간" 버튼을 누르세요.', cols=[], rows=[]))
-    out.append(dict(level='info', title='마진은 현재 입고원가로 계산한 추정치',
-                    detail='SKU별 현재 입고원가를 과거 출고에도 똑같이 적용했습니다. 25년 당시 실제 원가(환율 등)와 다를 수 있고, 물류비·판매장려금 같은 비용은 빠져 있습니다.', cols=[], rows=[]))
+    out.append(dict(level='info', title='마진은 2026 표준원가로 계산한 추정치',
+                    detail='SKU별 2026 표준원가(VAT 별도)를 과거 출고에도 똑같이 적용했습니다. 25년 당시 실제 원가(환율 등)와 다를 수 있고, 물류비·판매장려금 같은 비용은 빠져 있습니다.', cols=[], rows=[]))
     order = {'chk': 0, 'fix': 1, 'info': 2, 'ok': 3}
     return sorted(out, key=lambda i: order[i['level']])
 
@@ -148,7 +148,9 @@ def issues_for(d, total_row, cost):
 def main():
     xlsx, cost_path, pw = sys.argv[1:4]
     out_path = sys.argv[4] if len(sys.argv) > 4 else os.path.join(HERE, '..', 'index.html')
-    cost = json.load(open(cost_path, encoding='utf-8'))
+    cfg = json.load(open(cost_path, encoding='utf-8'))
+    cost = cfg['cost'] if 'cost' in cfg else cfg
+    nego = cfg.get('nego')
     d, total_row = load(xlsx)
     missing = set(d['품목명']) - set(cost)
     if missing:
@@ -161,7 +163,7 @@ def main():
              '' if pd.isna(r.거래처대분류) else r.거래처대분류, '' if pd.isna(r.거래처중분류) else r.거래처중분류,
              t, '' if pd.isna(r.영업담당자명) else r.영업담당자명, r.수주유형]
             for (_, r), t in zip(d.iterrows(), team)]
-    payload = dict(rows=rows, cost=cost, issues=issues,
+    payload = dict(rows=rows, cost=cost, nego=nego, issues=issues,
                    meta=dict(minDate=ds(d['출고일'].min()), maxDate=ds(d['출고일'].max()), nRows=len(d),
                              source=os.path.basename(xlsx), built=datetime.now(timezone.utc).isoformat()))
     pt = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).encode()
