@@ -535,7 +535,7 @@ function vNego(){
   if(!N)return `<div class="crumb">BOSU 분석 › <b>단가 네고 근거</b></div>`+panel('설정 없음','',`<div class="pb"><p class="note">단가 네고 설정이 없습니다.</p></div>`);
   const acc=new Set(N.accounts);
   const grp=r=>r.cust.includes('쿠팡')?'cp':acc.has(r.cust)?'acc':'etc';
-  const G={cp:'쿠팡 직매입',acc:'주요 대리점 '+N.accounts.length+'곳',etc:'그 외 채널'};
+  const G={cp:'쿠팡 직매입',acc:'웰리플 주요 대리점 '+N.accounts.length+'곳',etc:'그 외 채널'};
   const ytd=(y,g)=>R.filter(r=>r.paid&&r.item===PRO&&r.y===y&&r.md<=CUT&&(!g||grp(r)===g)).reduce((s,r)=>s+r.q,0);
   const days=(new Date(P.meta.maxDate)-new Date(P.meta.maxDate.slice(0,4)+'-01-01'))/864e5+1;
   const ann=g=>Math.round(R.filter(r=>r.paid&&r.item===PRO&&r.y===2026&&grp(r)===g).reduce((s,r)=>s+r.q,0)/days*365);
@@ -555,7 +555,7 @@ function vNego(){
   panel('시장 가격 비교','부가세 포함 · 점선은 표준원가(부가세 포함 환산)',`<div class="pb ladder"><div class="cl-key"><i></i>표준원가 ${F.won(cvat)}원 (VAT 포함 환산)</div>${lad}<p class="note">코스트코 물량 리셀러 판매가가 당사 대리점 공급가보다 낮습니다. 쿠팡 공급가는 표준원가와 거의 같습니다.</p></div>`)+
   panel('희망원가별 채널 이익률','원가 기준 이익률 · 쿠팡 비용(판매수수료 등) 미반영',`<div class="tbl free"><table><thead><tr><th>원가 시나리오</th><th class="r">원가 (VAT 별도)</th><th class="r">표준원가 대비</th>${chs.map(c=>`<th class="r">${esc(c.label)}</th>`).join('')}</tr></thead><tbody>${scen}</tbody></table></div>`)+
   `<div class="grid2">`+
-  panel('판매 추이','Professional · 두 해 모두 1/1~'+(+CUT.slice(0,2))+'/'+(+CUT.slice(3)),`<div class="tbl free"><table><thead><tr><th>채널</th><th class="r g25">2025</th><th class="r g26">2026</th><th class="r">증감</th></tr></thead><tbody>${trend}<tr class="tot"><td>합계</td><td class="r">${F.int(ytd(2025))}</td><td class="r">${F.int(ytd(2026))}</td><td class="r">${dHtml(ytd(2026),ytd(2025))}</td></tr></tbody></table></div><div class="pb"><p class="note">주요 대리점: ${N.accounts.map(esc).join(', ')}</p></div>`)+
+  panel('판매 추이','Professional · 두 해 모두 1/1~'+(+CUT.slice(0,2))+'/'+(+CUT.slice(3)),`<div class="tbl free"><table><thead><tr><th>채널</th><th class="r g25">2025</th><th class="r g26">2026</th><th class="r">증감</th></tr></thead><tbody>${trend}<tr class="tot"><td>합계</td><td class="r">${F.int(ytd(2025))}</td><td class="r">${F.int(ytd(2026))}</td><td class="r">${dHtml(ytd(2026),ytd(2025))}</td></tr></tbody></table></div><div class="pb"><p class="note">웰리플사업팀 주요 대리점 (26년 담당 기준, 25년 일부는 타 팀 담당): ${N.accounts.map(esc).join(', ')}</p></div>`)+
   panel('2027년 예상 판매수량','Professional · 현행은 2026년 연환산',`<div class="tbl free"><table><thead><tr><th>채널</th><th class="r">현행 단가</th><th class="r">희망 단가</th><th class="r">증감</th></tr></thead><tbody>${['cp','acc','etc'].map(g=>`<tr><td><b>${G[g]}</b></td><td class="r">${F.int(cur[g])}</td><td class="r">${F.int(hope[g])}</td><td class="r">${dHtml(hope[g],cur[g])}</td></tr>`).join('')}<tr class="tot"><td>합계</td><td class="r">${F.int(sum(cur))}</td><td class="r">${F.int(sum(hope))}</td><td class="r">${dHtml(sum(hope),sum(cur))}</td></tr></tbody></table></div><div class="pb"><p class="note">${esc(N.fcNote||'')}</p></div>`)+
   `</div>`;
 }
